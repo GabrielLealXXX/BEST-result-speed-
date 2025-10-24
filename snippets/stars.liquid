@@ -1,0 +1,81 @@
+{% comment %}
+  ⚡ STARS.LIQUID - VERSÃO OTIMIZADA PARA PERFORMANCE
+  
+  OTIMIZAÇÕES APLICADAS:
+  - SVG symbols reutilizáveis (carrega 1x, reutiliza infinitamente)
+  - CSS minificado e com containment
+  - Cálculos Liquid otimizados (menos operações)
+  - Half-star simplificado com clip-path CSS
+  - Removido ID único (usando classes)
+  - Mobile-first CSS
+  - Zero JavaScript
+  
+  Parâmetros:
+  - rating: número 0-5 (suporta decimais)
+  - size: small|medium|large (padrão: medium)
+  - show_number: true|false (padrão: false)
+  - aria_label: string customizado
+{% endcomment %}
+
+{%- liquid
+  assign rating = rating | default: 0 | times: 1.0
+  assign size = size | default: 'medium'
+  assign show_number = show_number | default: false
+  
+  # "Cálculo otimizado de estrelas"
+  assign full_stars = rating | floor
+  assign decimal = rating | minus: full_stars
+  assign has_half = false
+  
+  if decimal >= 0.25 and decimal < 0.75
+    assign has_half = true
+    assign empty_stars = 4 | minus: full_stars
+  elsif decimal >= 0.75
+    assign full_stars = full_stars | plus: 1
+    assign empty_stars = 5 | minus: full_stars
+  else
+    assign empty_stars = 5 | minus: full_stars
+  endif
+  
+  # "Aria label"
+  unless aria_label
+    assign aria_label = rating | round: 1 | append: ' de 5 estrelas'
+  endunless
+-%}
+
+{%- comment -%} SVG Symbols - Carrega 1x, reutiliza sempre {%- endcomment -%}
+<svg hidden aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+  <defs>
+    <symbol id="star-icon" viewBox="0 0 24 24">
+      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="sr sr--{{ size }}" role="img" aria-label="{{ aria_label }}">
+  <span class="sr__c">
+    {%- comment -%} Estrelas cheias {%- endcomment -%}
+    {%- for i in (1..full_stars) -%}
+      <svg class="sr__s sr__s--f" aria-hidden="true"><use href="#star-icon"/></svg>
+    {%- endfor -%}
+    
+    {%- comment -%} Meia estrela (clip-path CSS) {%- endcomment -%}
+    {%- if has_half -%}
+      <svg class="sr__s sr__s--h" aria-hidden="true"><use href="#star-icon"/></svg>
+    {%- endif -%}
+    
+    {%- comment -%} Estrelas vazias {%- endcomment -%}
+    {%- for i in (1..empty_stars) -%}
+      <svg class="sr__s sr__s--e" aria-hidden="true"><use href="#star-icon"/></svg>
+    {%- endfor -%}
+  </span>
+  
+  {%- if show_number -%}
+    <span class="sr__n">{{ rating | round: 1 }}</span>
+  {%- endif -%}
+</div>
+
+{%- comment -%} CSS CRÍTICO - Minificado {%- endcomment -%}
+<style>
+.sr{display:inline-flex;align-items:center;gap:4px;contain:layout style}.sr__c{display:inline-flex;gap:2px}.sr__s{flex-shrink:0;width:20px;height:20px;fill:currentColor}.sr--small .sr__s{width:16px;height:16px}.sr--large .sr__s{width:24px;height:24px}.sr__s--f{color:#FFB800}.sr__s--e{color:#e0e0e0}.sr__s--h{color:#FFB800;position:relative}.sr__s--h::after{content:'';position:absolute;top:0;left:50%;right:0;bottom:0;background:#e0e0e0;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}.sr__n{margin-left:8px;font-weight:600;color:#333;font-size:16px}.sr--small .sr__n{font-size:14px}.sr--large .sr__n{font-size:18px}
+</style>
